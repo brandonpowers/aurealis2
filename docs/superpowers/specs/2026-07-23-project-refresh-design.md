@@ -1,0 +1,137 @@
+# Aurealis2 Project Refresh — Design
+
+**Date:** 2026-07-23
+**Status:** Approved (all sections reviewed in brainstorming session)
+
+## Context
+
+Aurealis2 is a multi-dimensional audio visualizer: C++ DSP (designed for iPlug2)
+plus a Three.js WebGL point-cloud renderer that also runs standalone in a browser.
+Phases 1–4 (DSP core, WebView UI, advanced analysis, parameters) are complete and
+tested. The work sat untouched for ~5 months: the repository has **zero commits** —
+everything is staged or untracked. The visual test harness (7 audio checkpoints via
+Puppeteer) passes today against the current working tree.
+
+## Scope
+
+**In scope (this cycle):**
+
+1. Repo health — commit history, cleanup, reproducible tooling
+2. Dependency refresh — Three.js update, CI improvements
+3. Chrome redesign — pro-audio instrument aesthetic
+4. Visualization enhancements — rendering quality only; mappings frozen
+5. Shippable standalone web app + performance
+
+**Out of scope (explicitly deferred):**
+
+- iPlug2 submodule / VST3 plugin builds (Linux support weak; proof would require CI)
+- Emscripten/WASM compilation of the C++ DSP
+- Any change to the aurealis frequency→color mapping or positional mappings
+
+## Section 1 — Foundation: repo health + dependency refresh
+
+**Commit strategy.** Commit the current working-tree state (it is what passes all
+7 visual checkpoints today) in logical commits:
+
+1. Build system (`CMakeLists.txt`, `CMakePresets.json`, `.gitignore`)
+2. DSP core (`Aurealis2/dsp/`, `Aurealis2/*.cpp|h`, `config.h`)
+3. Tests (`tests/`)
+4. Web UI (`Aurealis2/resources/web/` including vendored Three.js)
+5. Scripts + CI (`Aurealis2/scripts/`, `.github/`)
+6. Docs (`README.md`, `TESTING.md`)
+
+No attempt to reconstruct staged-vs-modified history from February.
+
+**Cleanup.**
+
+- Delete compiled test binaries from repo root (`test_fft`, `test_chord`,
+  `test_harmonic`, `test_integration`, `test_ringbuffer`); gitignore the pattern.
+- Gitignore `test.mp3` (unknown provenance — never committed, never shipped) and
+  `test-reference.wav` (regenerable via `gen-test-audio.sh`; CI regenerates with ffmpeg).
+- Add `package.json` with puppeteer as a devDependency so the visual-test setup is
+  reproducible (`npm install` instead of tribal knowledge).
+- Vendored Three.js stays tracked in `Aurealis2/resources/web/lib/`.
+
+**Dependency refresh.**
+
+- Update vendored `three.module.js` from r170 to the latest stable release (exact
+  version verified at implementation time). Gate: run the 7-checkpoint visual test
+  before and after; screenshots must match in structure, position, and hue.
+- Verify `cmake --preset default` + `ctest` pass locally (cmake is now installed).
+- CI: add a job that generates the reference WAV, serves the web directory, runs
+  `run-visual-tests.mjs` headless, and uploads the checkpoint screenshots as build
+  artifacts. For a visualizer, screenshots in CI are the meaningful test output.
+
+## Section 2 — Chrome redesign: pro-audio instrument
+
+**Design language.** Dark, precise, engineered — the MiniMeters / Ableton family.
+Near-black panels, 1px hairline borders, a single restrained accent color drawn
+from the aurealis palette, compact technical typography (sans for labels, mono for
+values). Fonts bundled locally — no CDN, no build step, pure HTML/CSS/JS, so the
+UI remains compatible with the eventual iPlug2 WebView embedding.
+
+**Components.**
+
+- **Status strip** (replaces bare top bar): source name, transport time, fps as a
+  subtle diagnostic readout.
+- **Camera presets** restyled as a hardware-style segmented toggle (3/4, Front, Side).
+- **Settings panel** reorganized into grouped sections — Analysis (FFT size,
+  sensitivity), Geometry (time depth, stereo spread, z-spacing, fade depth),
+  Color (color tune) — with custom thin-track sliders and right-aligned mono value
+  readouts.
+- **Idle auto-hide:** chrome fades after a few seconds of mouse inactivity,
+  reappears on movement. The visualization is the product; chrome yields to it.
+
+## Section 3 — Visualization enhancements
+
+**Frozen:** the aurealis hue formula, all positional mappings (frequency→Y,
+stereo→X, time→Z), density compensation, and stereo-spread behavior. The 7 visual
+checkpoints must still pass with identical structure, position, and hue.
+
+**Enhancements (rendering quality only):**
+
+- **Soft glow:** procedural radial-falloff point sprites with additive blending —
+  implemented in the existing shaders, no postprocessing pipeline, no new
+  dependencies. True bloom (EffectComposer) is a possible later quality toggle,
+  only if the shader-side glow underwhelms.
+- **Size attenuation and transient response tuning** so kicks and transients read
+  more dramatically.
+- Any persistence/trail effect ships behind a toggle, default subtle or off.
+
+## Section 4 — Shippable web app + performance
+
+- **First-run landing state:** app name, one-line pitch, three actions — drop an
+  audio file, use microphone, play demo. The demo track is a synthesized loop
+  generated by our own script (extend `gen-test-audio.sh`); no rights questions.
+- **Help overlay** (`?` key): the 7-dimension mapping table becomes an in-app
+  legend — explaining what you're seeing is the product's differentiator.
+- **Keyboard shortcuts:** space = play/pause, 1/2/3 = camera views, H = hide
+  chrome, F = fullscreen, ? = help.
+- **Meta polish:** favicon, page title, Open Graph tags.
+- **Performance:** measure in a real browser first — 41 fps under headless
+  SwiftShader is software rendering and likely unrepresentative. Target: 60 fps at
+  default settings on a real GPU. Optimize only what profiling shows; no
+  speculative optimization.
+
+## Section 5 — Testing
+
+- DSP: `ctest` after any change under `Aurealis2/dsp/`.
+- Visual: the 7 audio checkpoints are the regression baseline — run after every
+  shader or rendering change. The harness gains new checkpoints for UI states:
+  landing, settings panel open, help overlay.
+- Manual: real-browser verification of the full flow (landing → file drop → viz →
+  controls → shortcuts).
+
+## Success criteria
+
+1. Repo has a clean, logical commit history; no build artifacts or unclear-rights
+   media tracked; `npm install` + documented scripts reproduce the full test setup.
+2. CI is green: DSP tests on three platforms, visual checkpoints captured and
+   uploaded as artifacts.
+3. Three.js updated with no visual regression across the 7 checkpoints.
+4. Redesigned chrome implements the pro-audio language; all existing controls and
+   IPC (`setControlValue`) still function.
+5. Rendering enhancements visibly improve glow/transient impact while the 7
+   checkpoints remain correct in structure, position, and hue.
+6. Standalone page has landing state, help legend, shortcuts, and demo audio;
+   60 fps at defaults on real GPU (or profiled evidence of the actual ceiling).
