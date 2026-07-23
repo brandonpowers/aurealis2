@@ -1,0 +1,34 @@
+# Build
+build/
+build-*/
+*.o
+*.obj
+*.exe
+
+# Compiled test binaries (repo root; built ad-hoc with g++)
+/test_chord
+/test_fft
+/test_harmonic
+/test_integration
+/test_ringbuffer
+
+# IDE
+.vscode/
+.idea/
+*.xcodeproj/
+*.xcworkspace/
+compile_commands.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies (vendored Three.js in resources/web/lib IS tracked)
+libs/iPlug2/
+node_modules/
+
+# Local test audio — regenerable / unclear rights, never committed
+Aurealis2/resources/web/test-reference.wav
+Aurealis2/resources/web/test.mp3
+
+.superpowers/
