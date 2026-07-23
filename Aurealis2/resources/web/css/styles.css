@@ -1,0 +1,252 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    color: #ccc;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#visualizer {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Info overlay */
+#info-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 14px;
+    color: #fff;
+    pointer-events: none;
+    z-index: 60;
+    display: flex;
+    gap: 14px;
+    text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.8);
+    font-variant-numeric: tabular-nums;
+}
+
+#source-display {
+    color: rgba(255,255,255,0.5);
+}
+
+/* Controls panel */
+#controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 60;
+}
+
+#top-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+#camera-presets {
+    display: flex;
+    gap: 3px;
+}
+
+.cam-btn {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.6);
+    color: rgba(255,255,255,0.5);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
+}
+
+.cam-btn:hover {
+    background: rgba(40,40,40,0.8);
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+}
+
+.cam-btn.active {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+}
+
+#controls-toggle {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.6);
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#controls-toggle:hover {
+    background: rgba(40,40,40,0.8);
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+}
+
+#controls-panel {
+    margin-top: 6px;
+    padding: 12px 14px;
+    background: rgba(10,10,10,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    min-width: 220px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#controls.collapsed #controls-panel {
+    display: none;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.control-group input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    outline: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.control-group .value {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    min-width: 32px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.control-group select {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 11px;
+    padding: 3px 6px;
+    outline: none;
+    cursor: pointer;
+}
+
+.control-group select:focus {
+    border-color: rgba(255,255,255,0.3);
+}
+
+/* Checkpoint overlay */
+#checkpoint-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 40px;
+    cursor: pointer;
+}
+
+#checkpoint-box {
+    background: rgba(0,0,0,0.85);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 18px 28px;
+    max-width: 520px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#checkpoint-label {
+    font-size: 18px;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+#checkpoint-expect {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+#checkpoint-camera {
+    font-size: 13px;
+    color: #0ff;
+    margin-bottom: 12px;
+}
+
+#checkpoint-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+}

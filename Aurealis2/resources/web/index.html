@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurealis2</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <canvas id="visualizer"></canvas>
+
+        <!-- Info overlay -->
+        <div id="info-overlay">
+            <span id="fps-counter">60 fps</span>
+            <span id="time-display">0:00.0</span>
+            <span id="source-display"></span>
+        </div>
+
+        <!-- Checkpoint overlay (reference test mode) -->
+        <div id="checkpoint-overlay" style="display:none;">
+            <div id="checkpoint-box">
+                <div id="checkpoint-label"></div>
+                <div id="checkpoint-expect"></div>
+                <div id="checkpoint-camera"></div>
+                <div id="checkpoint-hint">Click anywhere to continue</div>
+            </div>
+        </div>
+
+        <!-- Camera presets + control panel -->
+        <div id="controls" class="collapsed">
+            <div id="top-bar">
+                <div id="camera-presets">
+                    <button class="cam-btn active" data-view="default" title="Default view">3/4</button>
+                    <button class="cam-btn" data-view="front" title="Front view">Front</button>
+                    <button class="cam-btn" data-view="side" title="Side view">Side</button>
+                </div>
+                <button id="controls-toggle" title="Toggle Controls">&#9881;</button>
+            </div>
+            <div id="controls-panel">
+                <div class="control-group">
+                    <label for="color-tune">Color Tune</label>
+                    <input type="range" id="color-tune" min="0" max="1" step="0.01" value="0.3">
+                    <span class="value" id="color-tune-val">0.30</span>
+                </div>
+                <div class="control-group">
+                    <label for="sensitivity">Sensitivity</label>
+                    <input type="range" id="sensitivity" min="0.1" max="10" step="0.01" value="2.5">
+                    <span class="value" id="sensitivity-val">2.50</span>
+                </div>
+                <div class="control-group">
+                    <label for="fft-size">FFT Size</label>
+                    <select id="fft-size">
+                        <option value="0">2048</option>
+                        <option value="1" selected>4096</option>
+                        <option value="2">8192</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="time-depth">Time Depth</label>
+                    <input type="range" id="time-depth" min="32" max="256" step="1" value="128">
+                    <span class="value" id="time-depth-val">128</span>
+                </div>
+                <div class="control-group">
+                    <label for="stereo-spread">Stereo Spread</label>
+                    <input type="range" id="stereo-spread" min="0" max="5" step="0.01" value="3.0">
+                    <span class="value" id="stereo-spread-val">2.00</span>
+                </div>
+                <div class="control-group">
+                    <label for="z-spacing">Z Spacing</label>
+                    <input type="range" id="z-spacing" min="0.01" max="0.5" step="0.001" value="0.2">
+                    <span class="value" id="z-spacing-val">0.20</span>
+                </div>
+                <div class="control-group">
+                    <label for="fade-depth">Fade Depth</label>
+                    <input type="range" id="fade-depth" min="0" max="1" step="0.01" value="0.45">
+                    <span class="value" id="fade-depth-val">0.45</span>
+                </div>
+
+                <!-- Standalone mode: audio source selector -->
+                <div id="audio-source-group" class="control-group" style="display:none;">
+                    <label for="audio-source">Audio Source</label>
+                    <select id="audio-source">
+                        <option value="mic">Microphone</option>
+                        <option value="file">Audio File</option>
+                    </select>
+                    <input type="file" id="audio-file" accept="audio/*" style="display:none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js (loaded as ES module) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./lib/three.module.js"
+        }
+    }
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
