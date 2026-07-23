@@ -26,6 +26,7 @@ set(AUREALIS2_HEADERS
 # DSP-only static library (used by tests and web build)
 add_library(aurealis2_dsp STATIC ${AUREALIS2_SRC} ${AUREALIS2_HEADERS})
 target_include_directories(aurealis2_dsp PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/dsp
 )
