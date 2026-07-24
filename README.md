@@ -31,14 +31,24 @@ Unlike tools like MiniMeters (8 separate meter views) or typical spectrograms (2
 | 2     | WebView UI (shaders, 3D)   | Complete |
 | 3     | Advanced Analysis           | Complete |
 | 4     | Parameters + Controls       | Complete |
-| 5     | Polish + Web Distribution   | Partial  |
+| 5     | Polish + Web Distribution   | Web complete; VST/WASM deferred |
 
 ## Quick Start (Standalone)
 
 ```bash
-cd Aurealis2/resources/web
-python3 -m http.server 8080
-# Open http://localhost:8080 in browser
+npm install          # once: puppeteer for tests
+npm run serve        # http://localhost:8080
 ```
 
-Drop an audio file or allow microphone access to start visualizing.
+Open http://localhost:8080 — drop an audio file, use the microphone, or hit **Play demo**. Press `?` in-app for the dimension legend and shortcuts.
+
+## Testing
+
+```bash
+cmake --preset default && cmake --build build && ctest --test-dir build   # DSP (5 suites)
+npm run gen:audio     # reference WAV (needs ffmpeg)
+npm run test:visual   # 7 render checkpoints (screenshots)
+npm run test:ui       # UI states: landing, panel, shortcuts, help
+```
+
+See TESTING.md for the full guide.
