@@ -134,6 +134,20 @@ test('help overlay toggles with ? and closes with Escape', async (page) => {
     if (gone !== 'none') throw new Error('Escape did not close help');
 });
 
+test('page metadata: title, description, favicon', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    const meta = await page.evaluate(() => ({
+        title: document.title,
+        desc: document.querySelector('meta[name="description"]')?.content ?? '',
+        icon: document.querySelector('link[rel="icon"]')?.href ?? '',
+    }));
+    if (!meta.title.startsWith('Aurealis')) throw new Error(`title: "${meta.title}"`);
+    if (meta.desc.length < 30) throw new Error('description missing/too short');
+    if (!meta.icon.endsWith('favicon.svg')) throw new Error('favicon link missing');
+    const iconResp = await page.goto(meta.icon);
+    if (!iconResp.ok()) throw new Error('favicon does not load');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({
