@@ -100,7 +100,7 @@ void main() {
     vDensityWeight = densityWeight;
 
     vec4 clipPos = projectionMatrix * modelViewMatrix * vec4(xPos, yPos, zPos, 1.0);
-    float magBoost = magnitude * magnitude * 0.5;
+    float magBoost = magnitude * magnitude * 0.4;
     float transientSizeBoost = transient * bassWeight * 0.35;  // Transients flash larger
     float size = (uPointSize + magBoost + transientSizeBoost) * densityWeight;
     float perspScale = 200.0 / clipPos.w;
