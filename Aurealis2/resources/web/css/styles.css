@@ -1,3 +1,38 @@
+/* ---- Fonts (bundled, OFL — see fonts/README.md) ---- */
+@font-face {
+    font-family: 'Inter';
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/inter-400.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/inter-500.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/jetbrains-mono-400.woff2') format('woff2');
+}
+
+/* ---- Design tokens ---- */
+:root {
+    --bg: #060708;
+    --panel: rgba(13, 15, 17, 0.85);
+    --hairline: rgba(255, 255, 255, 0.08);
+    --hairline-strong: rgba(255, 255, 255, 0.16);
+    --text: #e6e9ec;
+    --text-dim: #8b939c;
+    --text-faint: #5a626b;
+    --accent: #3edbe6;
+    --accent-dim: rgba(62, 219, 230, 0.35);
+    --font-ui: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -8,9 +43,10 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #000;
-    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    color: #ccc;
+    background: var(--bg);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text);
     user-select: none;
     -webkit-user-select: none;
 }
@@ -33,13 +69,17 @@ html, body {
     top: 12px;
     left: 12px;
     font-size: 14px;
-    color: #fff;
+    color: var(--text);
     pointer-events: none;
     z-index: 60;
     display: flex;
     gap: 14px;
     text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.8);
     font-variant-numeric: tabular-nums;
+}
+
+#time-display {
+    font-family: var(--font-mono);
 }
 
 #source-display {
@@ -185,6 +225,7 @@ html, body {
     min-width: 32px;
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
 }
 
 .control-group select {
@@ -216,8 +257,8 @@ html, body {
 }
 
 #checkpoint-box {
-    background: rgba(0,0,0,0.85);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: var(--panel);
+    border: 1px solid var(--hairline-strong);
     border-radius: 10px;
     padding: 18px 28px;
     max-width: 520px;
@@ -242,7 +283,7 @@ html, body {
 
 #checkpoint-camera {
     font-size: 13px;
-    color: #0ff;
+    color: var(--accent);
     margin-bottom: 12px;
 }
 
