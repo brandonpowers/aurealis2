@@ -42,6 +42,11 @@ const browser = await puppeteer.launch({
 });
 
 const page = await browser.newPage();
+const pageErrors = [];
+page.on('pageerror', (err) => {
+    pageErrors.push(err.message);
+    console.error('PAGE ERROR:', err.message);
+});
 await page.setViewport({ width: 1280, height: 720 });
 
 console.log('Loading reference test from localhost:' + PORT + '...');
@@ -93,6 +98,11 @@ for (let i = 1; i <= NUM_CHECKPOINTS; i++) {
         await page.click('body');
     }
     await new Promise(r => setTimeout(r, 500));
+}
+
+if (pageErrors.length > 0) {
+    console.error(`${pageErrors.length} page error(s) — failing.`);
+    failed += pageErrors.length;
 }
 
 await browser.close();
