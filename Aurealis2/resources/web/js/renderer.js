@@ -163,6 +163,23 @@ export class Renderer {
      * Update a parameter uniform.
      */
     setParam(name, value) {
+        if (name === 'timeDepth') {
+            const depth = Math.round(value);
+            this.params.timeDepth = depth;
+            if (this.dataBuffer && depth !== this.dataBuffer.timeDepth) {
+                this.dataBuffer.dispose();
+                this.dataBuffer = new SpectrogramDataBuffer(this.params.numBins, depth);
+                this.uniforms.uDataTexture.value = this.dataBuffer.texture;
+                this.uniforms.uHueTexture.value = this.dataBuffer.hueTexture;
+                this.uniforms.uTimeDepth.value = depth;
+                this.uniforms.uWriteIndex.value = 0;
+                const old = this.spectrogramMesh.geometry;
+                this.spectrogramMesh.geometry = createSpectrogramGeometry(this.params.numBins, depth);
+                old.dispose();
+            }
+            return;
+        }
+
         this.params[name] = value;
         const uniformMap = {
             colorTune: 'uColorTune',

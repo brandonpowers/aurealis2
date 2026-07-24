@@ -148,6 +148,26 @@ test('page metadata: title, description, favicon', async (page) => {
     if (!iconOk) throw new Error('favicon does not load');
 });
 
+test('fft size and time depth controls actually apply', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.click('#landing-play-demo');
+    await new Promise(r => setTimeout(r, 1500));
+    await page.select('#fft-size', '0');
+    await new Promise(r => setTimeout(r, 300));
+    const fft = await page.evaluate(() => window.__aurealisDebug.getFFTSize());
+    if (fft !== 2048) throw new Error(`fftSize uniform got ${fft}, want 2048`);
+    await page.evaluate(() => {
+        const el = document.getElementById('time-depth');
+        el.value = '64';
+        el.dispatchEvent(new Event('input'));
+    });
+    await new Promise(r => setTimeout(r, 300));
+    const td = await page.evaluate(() => window.__aurealisDebug.getTimeDepth());
+    if (td !== 64) throw new Error(`timeDepth buffer got ${td}, want 64`);
+    const fps = await page.evaluate(() => window.__aurealisDebug.getFPS());
+    if (!(fps > 0)) throw new Error('renderer stopped after control changes');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

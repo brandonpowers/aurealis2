@@ -110,6 +110,7 @@ window.__aurealisDebug = {
     getAudioState: () => audioContext?.state,
     getFPS: () => renderer?.getFPS() ?? 0,
     getFFTSize: () => renderer?.params.fftSize ?? 0,
+    getTimeDepth: () => renderer?.dataBuffer?.timeDepth ?? 0,
 };
 
 // ---- Boot ----
