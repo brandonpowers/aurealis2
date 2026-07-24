@@ -161,6 +161,11 @@ body.ui-idle #controls {
     opacity: 0;
     pointer-events: none;
 }
+body.ui-hidden #status-strip,
+body.ui-hidden #controls {
+    opacity: 0;
+    pointer-events: none;
+}
 
 #controls-panel {
     margin-top: 6px;

@@ -106,6 +106,20 @@ test('ref mode skips the landing', async (page) => {
     if (display !== 'none') throw new Error('landing visible in ?ref mode');
 });
 
+test('keyboard: camera presets and chrome hide', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.keyboard.press('2');
+    const frontActive = await page.$eval('.cam-btn[data-view="front"]',
+        el => el.classList.contains('active'));
+    if (!frontActive) throw new Error('key "2" did not activate front preset');
+    await page.keyboard.press('h');
+    if (!(await page.evaluate(() => document.body.classList.contains('ui-hidden'))))
+        throw new Error('key "h" did not hide chrome');
+    await page.keyboard.press('h');
+    if (await page.evaluate(() => document.body.classList.contains('ui-hidden')))
+        throw new Error('second "h" did not restore chrome');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

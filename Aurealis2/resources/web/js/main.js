@@ -70,6 +70,37 @@ function setupIdleHide() {
     wake();
 }
 
+// ---- Keyboard shortcuts ----
+function setCameraPresetAndButtons(view) {
+    if (renderer) renderer.setCameraPreset(view);
+    document.querySelectorAll('.cam-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.view === view));
+}
+
+function handleKey(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    switch (e.key) {
+        case ' ':
+            e.preventDefault();
+            if (!audioContext) break;
+            if (audioContext.state === 'running') audioContext.suspend();
+            else audioContext.resume();
+            break;
+        case '1': setCameraPresetAndButtons('default'); break;
+        case '2': setCameraPresetAndButtons('front'); break;
+        case '3': setCameraPresetAndButtons('side'); break;
+        case 'h': case 'H':
+            document.body.classList.toggle('ui-hidden');
+            break;
+        case 'f': case 'F':
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+            break;
+    }
+}
+
+// Test hook — tiny, read-only
+window.__aurealisDebug = { getAudioState: () => audioContext?.state };
 
 // ---- Boot ----
 async function boot() {
@@ -99,15 +130,11 @@ async function boot() {
     // Set up camera controls (mouse drag / scroll)
     setupCameraControls(canvas);
     setupIdleHide();
+    window.addEventListener('keydown', handleKey);
 
     // Camera preset buttons
     document.querySelectorAll('.cam-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const view = btn.dataset.view;
-            if (renderer) renderer.setCameraPreset(view);
-            document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
+        btn.addEventListener('click', () => setCameraPresetAndButtons(btn.dataset.view));
     });
 
     if (isPluginMode) {
