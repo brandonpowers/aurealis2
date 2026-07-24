@@ -106,7 +106,10 @@ function handleKey(e) {
 }
 
 // Test hook — tiny, read-only
-window.__aurealisDebug = { getAudioState: () => audioContext?.state };
+window.__aurealisDebug = {
+    getAudioState: () => audioContext?.state,
+    getFPS: () => renderer?.getFPS() ?? 0,
+};
 
 // ---- Boot ----
 async function boot() {
