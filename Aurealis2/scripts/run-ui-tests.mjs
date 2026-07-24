@@ -120,6 +120,20 @@ test('keyboard: camera presets and chrome hide', async (page) => {
         throw new Error('second "h" did not restore chrome');
 });
 
+test('help overlay toggles with ? and closes with Escape', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.keyboard.press('?');
+    const vis = await page.evaluate(() =>
+        getComputedStyle(document.getElementById('help-overlay')).display);
+    if (vis === 'none') throw new Error('? did not open help');
+    const rows = await page.$$eval('#help-overlay tbody tr', r => r.length);
+    if (rows !== 7) throw new Error(`legend has ${rows} rows, want 7`);
+    await page.keyboard.press('Escape');
+    const gone = await page.evaluate(() =>
+        getComputedStyle(document.getElementById('help-overlay')).display);
+    if (gone !== 'none') throw new Error('Escape did not close help');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

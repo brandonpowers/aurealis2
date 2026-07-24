@@ -24,6 +24,34 @@
             </div>
         </div>
 
+        <!-- Help overlay (dimension legend + keyboard reference) -->
+        <div id="help-overlay" style="display:none;">
+            <div id="help-card">
+                <button id="help-close" aria-label="Close">&times;</button>
+                <div class="help-title">What you're seeing</div>
+                <table>
+                    <thead><tr><th>Audio dimension</th><th>Visual property</th></tr></thead>
+                    <tbody>
+                        <tr><td>Frequency</td><td>Height (log scale)</td></tr>
+                        <tr><td>Magnitude</td><td>Brightness</td></tr>
+                        <tr><td>Stereo width</td><td>Left / right position</td></tr>
+                        <tr><td>Time</td><td>Depth (recedes into screen)</td></tr>
+                        <tr><td>Harmonic energy</td><td>Saturation — tonal is vivid, noise is pastel</td></tr>
+                        <tr><td>Transient energy</td><td>Punch — kicks displace and enlarge points</td></tr>
+                        <tr><td>Musical pitch</td><td>Hue — same note, same color, every octave</td></tr>
+                    </tbody>
+                </table>
+                <div class="help-title">Keyboard</div>
+                <div id="help-keys">
+                    <span><kbd>Space</kbd> play / pause</span>
+                    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> camera views</span>
+                    <span><kbd>H</kbd> hide interface</span>
+                    <span><kbd>F</kbd> fullscreen</span>
+                    <span><kbd>?</kbd> this help</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Status strip (unified top bar) -->
         <div id="status-strip" class="chrome">
             <span class="wordmark">AUREALIS</span>

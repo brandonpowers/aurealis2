@@ -96,6 +96,12 @@ function handleKey(e) {
             if (document.fullscreenElement) document.exitFullscreen();
             else document.documentElement.requestFullscreen?.();
             break;
+        case '?':
+            toggleHelp();
+            break;
+        case 'Escape':
+            setHelpVisible(false);
+            break;
     }
 }
 
@@ -136,6 +142,8 @@ async function boot() {
     document.querySelectorAll('.cam-btn').forEach(btn => {
         btn.addEventListener('click', () => setCameraPresetAndButtons(btn.dataset.view));
     });
+
+    document.getElementById('help-close')?.addEventListener('click', () => setHelpVisible(false));
 
     if (isPluginMode) {
         // Plugin mode: data arrives via window.onAnalysisFrame (called from C++)
@@ -237,6 +245,16 @@ function showLanding() {
 function hideLanding() {
     const el = document.getElementById('landing');
     if (el) el.style.display = 'none';
+}
+
+// ---- Help overlay ----
+function setHelpVisible(show) {
+    const el = document.getElementById('help-overlay');
+    if (el) el.style.display = show ? 'flex' : 'none';
+}
+function toggleHelp() {
+    const el = document.getElementById('help-overlay');
+    if (el) setHelpVisible(el.style.display === 'none');
 }
 
 function setupLanding() {
