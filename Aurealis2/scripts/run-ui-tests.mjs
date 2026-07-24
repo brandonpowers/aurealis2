@@ -144,8 +144,8 @@ test('page metadata: title, description, favicon', async (page) => {
     if (!meta.title.startsWith('Aurealis')) throw new Error(`title: "${meta.title}"`);
     if (meta.desc.length < 30) throw new Error('description missing/too short');
     if (!meta.icon.endsWith('favicon.svg')) throw new Error('favicon link missing');
-    const iconResp = await page.goto(meta.icon);
-    if (!iconResp.ok()) throw new Error('favicon does not load');
+    const iconOk = await page.evaluate((url) => fetch(url).then(r => r.ok).catch(() => false), meta.icon);
+    if (!iconOk) throw new Error('favicon does not load');
 });
 
 // ---------------------------------------------------------------- runner --
