@@ -114,28 +114,24 @@ async function boot() {
         // Plugin mode: data arrives via window.onAnalysisFrame (called from C++)
         console.log('[Aurealis2] Plugin mode — waiting for analysis frames');
     } else {
-        // Standalone mode: show audio source controls, auto-load test file
         console.log('[Aurealis2] Standalone mode — starting Web Audio');
         showAudioSourceControls();
-        // Load audio: ?ref loads reference test file, default loads test.mp3
         const params = new URLSearchParams(window.location.search);
-        const isRefMode = params.has('ref');
-        const audioFile = isRefMode ? 'test-reference.wav' : 'test.mp3';
-        const testUrl = new URL('../' + audioFile, import.meta.url).href;
-
-        // Only enable checkpoints in ?ref mode
-        if (!isRefMode) checkpoints.length = 0;
-        if (isRefMode) setupCheckpointClick();
-
-        await playAudioUrl(testUrl);
-        // Resume AudioContext on first click (browser autoplay policy)
-        if (audioContext && audioContext.state === 'suspended') {
-            console.log('[Aurealis2] AudioContext suspended — click to start playback');
-            const resume = () => {
-                audioContext.resume();
-                document.removeEventListener('click', resume);
-            };
-            document.addEventListener('click', resume);
+        if (params.has('ref')) {
+            // Reference test mode: auto-load the checkpoint WAV, no landing
+            setupCheckpointClick();
+            const refUrl = new URL('../test-reference.wav', import.meta.url).href;
+            await playAudioUrl(refUrl);
+            if (audioContext && audioContext.state === 'suspended') {
+                const resume = () => {
+                    audioContext.resume();
+                    document.removeEventListener('click', resume);
+                };
+                document.addEventListener('click', resume);
+            }
+        } else {
+            checkpoints.length = 0;
+            setupLanding();
         }
     }
 
@@ -202,6 +198,47 @@ function setupCheckpointClick() {
         checkpointIndex++;
         checkpointPaused = false;
         if (audioContext) audioContext.resume();
+    });
+}
+
+// ---- Landing ----
+function showLanding() {
+    const el = document.getElementById('landing');
+    if (el) el.style.display = 'flex';
+}
+
+function hideLanding() {
+    const el = document.getElementById('landing');
+    if (el) el.style.display = 'none';
+}
+
+function setupLanding() {
+    showLanding();
+    const fileInput = document.getElementById('audio-file');
+
+    document.getElementById('landing-open-file')?.addEventListener('click', () => {
+        fileInput?.click();
+    });
+    document.getElementById('landing-use-mic')?.addEventListener('click', async () => {
+        hideLanding();
+        await startWebAudio();
+    });
+    document.getElementById('landing-play-demo')?.addEventListener('click', async () => {
+        hideLanding();
+        const demoUrl = new URL('../demo.m4a', import.meta.url).href;
+        await playAudioUrl(demoUrl);
+        if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+    });
+
+    // Drag & drop anywhere
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+            hideLanding();
+            onParamChange('audioFile', file);
+        }
     });
 }
 
@@ -301,6 +338,7 @@ function onParamChange(paramName, value) {
         if (value === 'mic') startWebAudio();
     }
     if (paramName === 'audioFile' && !isPluginMode) {
+        hideLanding();
         // Clear reference test checkpoints when user loads a new file
         checkpoints.length = 0;
         checkpointIndex = 0;
@@ -314,6 +352,7 @@ function onParamChange(paramName, value) {
 // ---- Standalone Mode: Web Audio API ----
 
 async function startWebAudio() {
+    hideLanding();
     try {
         // Disable reference test checkpoints when switching source
         checkpoints.length = 0;
@@ -400,7 +439,8 @@ async function playAudioFile(file) {
     }
 }
 
-// DEV: load audio from URL for faster iteration (remove before release)
+// Loads bundled audio (demo track or reference test WAV) from a URL and
+// routes it through the same playback path as a user-selected file.
 async function playAudioUrl(url) {
     try {
         const response = await fetch(url);

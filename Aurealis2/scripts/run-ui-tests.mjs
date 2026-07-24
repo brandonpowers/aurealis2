@@ -75,6 +75,37 @@ test('chrome auto-hides after idle and returns on mouse move', async (page) => {
         throw new Error('ui-idle not cleared on mouse move');
 });
 
+test('landing shows on default load with three actions', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    const visible = await page.evaluate(() => {
+        const el = document.getElementById('landing');
+        return el && getComputedStyle(el).display !== 'none';
+    });
+    if (!visible) throw new Error('#landing not visible');
+    for (const sel of ['#landing-open-file', '#landing-use-mic', '#landing-play-demo']) {
+        if (!(await page.$(sel))) throw new Error(`missing ${sel}`);
+    }
+});
+
+test('play demo hides landing and starts playback', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.click('#landing-play-demo');
+    await new Promise(r => setTimeout(r, 2500));
+    const state = await page.evaluate(() => ({
+        landingGone: getComputedStyle(document.getElementById('landing')).display === 'none',
+        source: document.getElementById('source-display').textContent,
+    }));
+    if (!state.landingGone) throw new Error('landing still visible after demo click');
+    if (!state.source.includes('demo')) throw new Error(`source display: "${state.source}"`);
+});
+
+test('ref mode skips the landing', async (page) => {
+    await page.goto(`${BASE}/index.html?ref`, { waitUntil: 'networkidle0', timeout: 30000 });
+    const display = await page.evaluate(() =>
+        getComputedStyle(document.getElementById('landing')).display);
+    if (display !== 'none') throw new Error('landing visible in ?ref mode');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

@@ -10,6 +10,20 @@
     <div id="app">
         <canvas id="visualizer"></canvas>
 
+        <!-- Landing overlay (standalone default load) -->
+        <div id="landing" style="display:none;">
+            <div id="landing-card">
+                <div id="landing-wordmark">AUREALIS</div>
+                <div id="landing-tagline">Every dimension of sound, one space.</div>
+                <div id="landing-actions">
+                    <button id="landing-open-file" class="landing-btn">Open audio file</button>
+                    <button id="landing-use-mic" class="landing-btn">Use microphone</button>
+                    <button id="landing-play-demo" class="landing-btn landing-btn-accent">Play demo</button>
+                </div>
+                <div id="landing-hint">or drop an audio file anywhere</div>
+            </div>
+        </div>
+
         <!-- Status strip (unified top bar) -->
         <div id="status-strip" class="chrome">
             <span class="wordmark">AUREALIS</span>
