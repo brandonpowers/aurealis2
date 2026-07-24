@@ -52,6 +52,17 @@ test('status strip contains wordmark, readouts, cameras, and gear', async (page)
     }
 });
 
+test('settings panel opens with three grouped sections', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.click('#controls-toggle');
+    const titles = await page.$$eval('#controls-panel .group-title',
+        els => els.map(e => e.textContent.trim()));
+    const want = ['Analysis', 'Geometry', 'Color'];
+    for (const w of want) {
+        if (!titles.includes(w)) throw new Error(`missing group "${w}" — got: ${titles.join(', ')}`);
+    }
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

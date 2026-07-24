@@ -154,91 +154,94 @@ html, body {
 
 #controls-panel {
     margin-top: 6px;
-    padding: 12px 14px;
-    background: rgba(10,10,10,0.85);
-    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 14px 14px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
     border-radius: 8px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    min-width: 220px;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    width: 264px;
 }
 
-#controls.collapsed #controls-panel {
-    display: none;
+#controls.collapsed #controls-panel { display: none; }
+
+.group-title {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 12px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--hairline);
 }
+.group-title:first-child { margin-top: 0; }
 
 .control-group {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
-
-.control-group:last-child {
-    margin-bottom: 0;
-}
+.control-group:last-child { margin-bottom: 0; }
 
 .control-group label {
     font-size: 11px;
-    color: rgba(255,255,255,0.5);
-    min-width: 80px;
+    color: var(--text-dim);
+    min-width: 82px;
     flex-shrink: 0;
 }
 
 .control-group input[type="range"] {
     flex: 1;
-    height: 4px;
+    min-width: 0;
+    height: 2px;
     -webkit-appearance: none;
     appearance: none;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
+    background: var(--hairline-strong);
+    border-radius: 1px;
     outline: none;
 }
-
 .control-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--accent);
     cursor: pointer;
     border: none;
 }
-
 .control-group input[type="range"]::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--accent);
     cursor: pointer;
     border: none;
 }
 
 .control-group .value {
-    font-size: 11px;
-    color: rgba(255,255,255,0.4);
-    min-width: 32px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    min-width: 34px;
     text-align: right;
     font-variant-numeric: tabular-nums;
-    font-family: var(--font-mono);
 }
 
 .control-group select {
     flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--hairline-strong);
     border-radius: 4px;
-    color: #ccc;
+    color: var(--text);
+    font-family: var(--font-ui);
     font-size: 11px;
     padding: 3px 6px;
     outline: none;
     cursor: pointer;
 }
-
-.control-group select:focus {
-    border-color: rgba(255,255,255,0.3);
-}
+.control-group select:focus { border-color: var(--accent-dim); }
 
 /* Checkpoint overlay */
 #checkpoint-overlay {

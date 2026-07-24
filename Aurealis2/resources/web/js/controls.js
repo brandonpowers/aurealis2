@@ -148,6 +148,8 @@ export function updateSourceDisplay(source) {
  * Show audio source controls (for standalone/web mode).
  */
 export function showAudioSourceControls() {
+    const wrap = document.getElementById('audio-source-group-wrap');
+    if (wrap) wrap.style.display = 'block';
     const group = document.getElementById('audio-source-group');
     if (group) group.style.display = 'flex';
 }
