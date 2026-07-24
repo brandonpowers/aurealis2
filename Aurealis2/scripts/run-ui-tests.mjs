@@ -33,9 +33,14 @@ test('page loads without errors and design tokens are defined', async (page) => 
 test('bundled fonts are loaded', async (page) => {
     await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
-    const ok = await page.evaluate(() =>
-        document.fonts.check('12px Inter') && document.fonts.check('12px "JetBrains Mono"'));
-    if (!ok) throw new Error('Inter / JetBrains Mono not available after fonts.ready');
+    const ok = await page.evaluate(async () => {
+        await document.fonts.load('12px Inter');
+        await document.fonts.load('12px "JetBrains Mono"');
+        const loaded = (name) => [...document.fonts].some(
+            (f) => f.family.replace(/["']/g, '') === name && f.status === 'loaded');
+        return loaded('Inter') && loaded('JetBrains Mono');
+    });
+    if (!ok) throw new Error('Inter / JetBrains Mono @font-face not registered+loaded');
 });
 
 // ---------------------------------------------------------------- runner --
