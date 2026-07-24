@@ -47,6 +47,29 @@ const checkpoints = [
       camera: 'FRONT view — watch for pulsing rhythm' },
 ];
 
+// ---- Idle chrome hide ----
+const IDLE_MS = 3000;
+let idleTimer = null;
+
+function setupIdleHide() {
+    // Deterministic screenshots: never hide chrome in reference-test mode
+    if (new URLSearchParams(window.location.search).has('ref')) return;
+
+    const wake = () => {
+        document.body.classList.remove('ui-idle');
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            // Keep chrome while the settings panel is open
+            const controls = document.getElementById('controls');
+            if (controls && !controls.classList.contains('collapsed')) { wake(); return; }
+            document.body.classList.add('ui-idle');
+        }, IDLE_MS);
+    };
+    ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(ev =>
+        window.addEventListener(ev, wake, { passive: true }));
+    wake();
+}
+
 
 // ---- Boot ----
 async function boot() {
@@ -75,6 +98,7 @@ async function boot() {
 
     // Set up camera controls (mouse drag / scroll)
     setupCameraControls(canvas);
+    setupIdleHide();
 
     // Camera preset buttons
     document.querySelectorAll('.cam-btn').forEach(btn => {

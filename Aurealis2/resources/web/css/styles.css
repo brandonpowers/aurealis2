@@ -152,6 +152,16 @@ html, body {
     z-index: 60;
 }
 
+/* Idle: chrome fades out */
+#status-strip, #controls {
+    transition: opacity 0.4s ease;
+}
+body.ui-idle #status-strip,
+body.ui-idle #controls {
+    opacity: 0;
+    pointer-events: none;
+}
+
 #controls-panel {
     margin-top: 6px;
     padding: 12px 14px 14px;

@@ -63,6 +63,18 @@ test('settings panel opens with three grouped sections', async (page) => {
     }
 });
 
+test('chrome auto-hides after idle and returns on mouse move', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.mouse.move(640, 360);
+    await new Promise(r => setTimeout(r, 3600));
+    if (!(await page.evaluate(() => document.body.classList.contains('ui-idle'))))
+        throw new Error('ui-idle class not set after 3.6s');
+    await page.mouse.move(660, 360);
+    await new Promise(r => setTimeout(r, 200));
+    if (await page.evaluate(() => document.body.classList.contains('ui-idle')))
+        throw new Error('ui-idle not cleared on mouse move');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({
