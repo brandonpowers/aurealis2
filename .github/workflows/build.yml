@@ -62,3 +62,34 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure -C Debug
+
+  visual-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Generate reference audio
+        run: bash Aurealis2/scripts/gen-test-audio.sh
+
+      - name: Serve web directory
+        run: python3 -m http.server 8080 --directory Aurealis2/resources/web &
+
+      - name: Run visual checkpoint tests
+        run: mkdir -p visual-out && node Aurealis2/scripts/run-visual-tests.mjs --out visual-out
+
+      - name: Upload checkpoint screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-checkpoints
+          path: visual-out/*.png
