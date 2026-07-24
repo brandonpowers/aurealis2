@@ -109,6 +109,7 @@ function handleKey(e) {
 window.__aurealisDebug = {
     getAudioState: () => audioContext?.state,
     getFPS: () => renderer?.getFPS() ?? 0,
+    getFFTSize: () => renderer?.params.fftSize ?? 0,
 };
 
 // ---- Boot ----
@@ -358,7 +359,13 @@ window.onParamChange = function(paramId, value) {
                         'stereoSpread', 'zSpacing', 'fadeDepth'];
     const name = paramNames[paramId];
     if (name && renderer) {
-        renderer.setParam(name, value);
+        if (name === 'fftSize') {
+            const FFT_SIZES = [2048, 4096, 8192];
+            const size = FFT_SIZES[value] ?? 4096;
+            renderer.setParam('fftSize', size);
+        } else {
+            renderer.setParam(name, value);
+        }
         setControlValue(name, value);
     }
 };
@@ -366,7 +373,21 @@ window.onParamChange = function(paramId, value) {
 // ---- JS → C++ IPC (parameter changes from UI) ----
 function onParamChange(paramName, value) {
     if (renderer) {
-        renderer.setParam(paramName, value);
+        if (paramName === 'fftSize') {
+            // `value` here is the <select> INDEX (0/1/2) — correct as-is for the
+            // plugin IPC and setControlValue below, but the renderer/analysers
+            // need the actual FFT size.
+            const FFT_SIZES = [2048, 4096, 8192];
+            const size = FFT_SIZES[value] ?? 4096;
+            renderer.setParam('fftSize', size);
+            if (!isPluginMode) {
+                if (analyserNode) analyserNode.fftSize = size;
+                if (analyserNodeR) analyserNodeR.fftSize = size;
+                prevWebAudioMags = null;  // bin count changed
+            }
+        } else {
+            renderer.setParam(paramName, value);
+        }
     }
 
     // Send to C++ host if in plugin mode
@@ -406,9 +427,15 @@ async function startWebAudio() {
         checkpoints.length = 0;
         checkpointIndex = 0;
         checkpointPaused = false;
+        analyserNodeR = null;
+        prevWebAudioMags = null;
 
         if (audioContext) audioContext.close();
 
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(t => t.stop());
+            mediaStream = null;
+        }
         audioContext = new AudioContext({ sampleRate: 44100 });
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -436,6 +463,10 @@ async function playAudioFile(file) {
     try {
         if (audioContext) audioContext.close();
 
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(t => t.stop());
+            mediaStream = null;
+        }
         audioContext = new AudioContext({ sampleRate: 44100 });
         const arrayBuffer = await file.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
