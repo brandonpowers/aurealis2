@@ -10,11 +10,19 @@
     <div id="app">
         <canvas id="visualizer"></canvas>
 
-        <!-- Info overlay -->
-        <div id="info-overlay">
-            <span id="fps-counter">60 fps</span>
-            <span id="time-display">0:00.0</span>
+        <!-- Status strip (unified top bar) -->
+        <div id="status-strip" class="chrome">
+            <span class="wordmark">AUREALIS</span>
             <span id="source-display"></span>
+            <span id="time-display">0:00.0</span>
+            <span class="strip-spacer"></span>
+            <span id="fps-counter" title="Frames per second">60 fps</span>
+            <div id="camera-presets" role="group" aria-label="Camera view">
+                <button class="cam-btn active" data-view="default" title="Default view (1)">3/4</button>
+                <button class="cam-btn" data-view="front" title="Front view (2)">Front</button>
+                <button class="cam-btn" data-view="side" title="Side view (3)">Side</button>
+            </div>
+            <button id="controls-toggle" title="Settings" aria-label="Settings">&#9881;</button>
         </div>
 
         <!-- Checkpoint overlay (reference test mode) -->
@@ -27,16 +35,8 @@
             </div>
         </div>
 
-        <!-- Camera presets + control panel -->
+        <!-- Control panel -->
         <div id="controls" class="collapsed">
-            <div id="top-bar">
-                <div id="camera-presets">
-                    <button class="cam-btn active" data-view="default" title="Default view">3/4</button>
-                    <button class="cam-btn" data-view="front" title="Front view">Front</button>
-                    <button class="cam-btn" data-view="side" title="Side view">Side</button>
-                </div>
-                <button id="controls-toggle" title="Toggle Controls">&#9881;</button>
-            </div>
             <div id="controls-panel">
                 <div class="control-group">
                     <label for="color-tune">Color Tune</label>

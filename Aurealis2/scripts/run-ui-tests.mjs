@@ -43,6 +43,15 @@ test('bundled fonts are loaded', async (page) => {
     if (!ok) throw new Error('Inter / JetBrains Mono @font-face not registered+loaded');
 });
 
+test('status strip contains wordmark, readouts, cameras, and gear', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    for (const sel of ['#status-strip .wordmark', '#status-strip #time-display',
+                       '#status-strip #fps-counter', '#status-strip .cam-btn[data-view="front"]',
+                       '#status-strip #controls-toggle']) {
+        if (!(await page.$(sel))) throw new Error(`missing ${sel}`);
+    }
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({
