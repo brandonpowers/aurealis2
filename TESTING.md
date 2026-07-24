@@ -177,6 +177,11 @@ panel, keyboard shortcuts, help overlay, idle auto-hide, and page metadata. Each
 test gets a fresh headless page (SwiftShader WebGL, same as the visual tests) and,
 on success, a screenshot at `<out>/ui-<slug>.png`.
 
+Runs in CI as part of the `visual-tests` job in `.github/workflows/build.yml`,
+right after the visual checkpoint tests, against the same `visual-out/` directory
+— its `ui-*.png` screenshots are picked up by the same `visual-checkpoints`
+artifact upload alongside the checkpoint screenshots.
+
 ### Run
 
 ```bash
@@ -185,7 +190,7 @@ npm run test:ui
 # equivalent: node Aurealis2/scripts/run-ui-tests.mjs [--port 8080] [--out /tmp]
 ```
 
-### The 11 Tests
+### The 12 Tests
 
 | # | Test | What it validates |
 |---|------|--------------------|
@@ -200,6 +205,7 @@ npm run test:ui
 | 9 | keyboard: camera presets and chrome hide | Key `2` activates the front camera preset; `h` toggles `ui-hidden` on and off |
 | 10 | help overlay toggles with ? and closes with Escape | `?` opens the help overlay (7-row dimension legend); `Escape` closes it |
 | 11 | page metadata: title, description, favicon | Title starts with "Aurealis", meta description is present, favicon link resolves and loads |
+| 12 | fft size and time depth controls actually apply | Changing the FFT-size select and the time-depth slider actually rebuilds the analyser/renderer state (not just the displayed value), and the renderer keeps running afterward |
 
 ### How to Add a Test
 
@@ -292,7 +298,7 @@ cmake --preset default && cmake --build build && ctest --test-dir build --output
 # Run visual reference test (automated, 7 checkpoints)
 npm run test:visual
 
-# Run UI state tests (automated, 11 tests)
+# Run UI state tests (automated, 12 tests)
 npm run test:ui
 
 # Regenerate reference WAV

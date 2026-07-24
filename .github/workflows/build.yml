@@ -91,9 +91,13 @@ jobs:
       - name: Run visual checkpoint tests
         run: mkdir -p visual-out && node Aurealis2/scripts/run-visual-tests.mjs --out visual-out
 
+      - name: Run UI state tests
+        run: node Aurealis2/scripts/run-ui-tests.mjs --out visual-out
+
       - name: Upload checkpoint screenshots
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: visual-checkpoints
           path: visual-out/*.png
+          if-no-files-found: error
