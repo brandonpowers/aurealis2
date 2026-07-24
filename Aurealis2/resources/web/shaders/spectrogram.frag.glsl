@@ -46,7 +46,11 @@ void main() {
     float dist = dot(pc, pc);
     if (dist > 1.0) discard;
     float sharpness = 1.8 + vHarmonicEnergy * 1.2;  // 1.8 (noise/soft) to 3.0 (tonal/crisp)
-    float softEdge = pow(1.0 - dist, sharpness);
+    float core = pow(1.0 - dist, sharpness);
+    // Wide faint halo lobe — additive blending turns overlap into glow.
+    // Kept small (0.18) so single points stay crisp; tonal content glows more.
+    float halo = pow(1.0 - dist, 1.1) * (0.18 + vHarmonicEnergy * 0.10);
+    float softEdge = core + halo;
 
     // Hue: per-bin aurealis formula (computed in vertex shader)
     float hue = vHue;
@@ -91,7 +95,7 @@ void main() {
     alpha *= softEdge;
 
     // Discard near-transparent fragments (lowered threshold for soft edge attenuation)
-    if (alpha < 0.02) discard;
+    if (alpha < 0.015) discard;
 
     // Additive blending: SRC_ALPHA blend factor handles alpha scaling,
     // so output non-premultiplied color (premultiplying would square alpha)
