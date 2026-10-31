@@ -30,5 +30,6 @@ node_modules/
 # Local test audio — regenerable / unclear rights, never committed
 Aurealis2/resources/web/test-reference.wav
 Aurealis2/resources/web/test.mp3
+Aurealis2/resources/web/PorterRobinson-Spitfire.mp3
 
 .superpowers/

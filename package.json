@@ -1,12 +1,15 @@
 {
   "name": "aurealis2-web",
   "private": true,
+  "type": "module",
   "description": "Test tooling for the Aurealis2 web visualizer",
   "scripts": {
-    "serve": "python3 -m http.server 8080 --directory Aurealis2/resources/web",
+    "test": "node --test tests/web/*.test.mjs",
+    "serve": "node Aurealis2/scripts/dev-server.mjs",
     "gen:audio": "bash Aurealis2/scripts/gen-test-audio.sh",
     "test:visual": "node Aurealis2/scripts/run-visual-tests.mjs",
-    "test:ui": "node Aurealis2/scripts/run-ui-tests.mjs"
+    "test:ui": "node Aurealis2/scripts/run-ui-tests.mjs",
+    "serve:static": "python3 -m http.server 8080 --directory Aurealis2/resources/web"
   },
   "devDependencies": {
     "puppeteer": "^25.3.0"

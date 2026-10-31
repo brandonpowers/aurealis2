@@ -1,9 +1,9 @@
 // Aurealis2 spectrogram fragment shader.
 // Implements the aurealis color algorithm:
-//   Hue = per-bin musical pitch (log2(freq/440) computed in vertex shader)
-//   Lightness = magnitude-driven (squared mag suppresses noise floor)
+//   Hue = per-time-slice dominant colour (aurealis hue of the strongest peaks, see js/analysis.js)
+//   Lightness = magnitude-driven (squared mag keeps quiet bins dim)
 //   Saturation = harmonic energy (tonal = vivid, noise = pastel)
-//   Alpha = magnitude * sensitivity + transient boost + harmonic boost
+//   Alpha = magnitude^1.5 * sensitivity + magnitude-gated transient/harmonic boosts
 //
 // Originally ported from ~/repos/aurealis/src/shaders/cylinderShader.ts
 
@@ -66,14 +66,16 @@ void main() {
     // Color from aurealis algorithm
     vec3 color = hslToRgb(hue, saturation, lightness);
 
-    // Squared magnitude suppresses noise floor while keeping real signal
-    // (noise at -80dB: 0.04 → 0.0016, signal at -20dB: 0.64 → 0.41)
+    // vMagnitude is linear in dB over -70..0 dB (see js/analysis.js), so the
+    // recording noise floor (≈ -80 dB) arrives as 0. pow 1.5 steepens what is
+    // left: -50 dB → 0.29 → 0.15, -20 dB → 0.71 → 0.60.
     float mag = pow(vMagnitude, 1.5);
 
-    // Alpha: amplitude-based with harmonic and transient boosts
+    // Alpha: amplitude-based with harmonic and transient boosts. The boosts are
+    // gated by magnitude so silent bins never flash on a kick or tonal content.
+    float present = smoothstep(0.0, 0.15, vMagnitude);
     float alpha = mag * uSensitivity
-                + vTransientEnergy * 0.8
-                + vHarmonicEnergy * 0.15;
+                + (vTransientEnergy * 0.8 + vHarmonicEnergy * 0.15) * present;
 
     // Soft knee compression — prevents harsh clipping at high sensitivity
     alpha = alpha / (1.0 + alpha * 0.5);

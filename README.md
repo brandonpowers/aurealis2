@@ -9,12 +9,12 @@ Unlike tools like MiniMeters (8 separate meter views) or typical spectrograms (2
 | Audio Dimension     | Visual Property        | How                                                    |
 |---------------------|------------------------|--------------------------------------------------------|
 | Frequency           | Y position (log)       | `log(freq)` mapped to vertical axis                    |
-| Magnitude           | Alpha / brightness     | Squared magnitude drives opacity                       |
-| Stereo width        | X position             | L/R balance spreads points left/right                  |
+| Magnitude           | Alpha / brightness     | dB-linear over -70..0 dB × spectral prominence, ^1.5   |
+| Stereo width        | X position             | L/R amplitude balance, gated to centre at the floor    |
 | Time                | Z depth                | Circular buffer recedes into the screen                |
 | Harmonic energy     | Saturation + sharpness | Tonal = vivid & crisp, noise = pastel & soft           |
 | Transient energy    | Displacement + size    | Kick drums punch outward, transients flash larger      |
-| Musical pitch       | Hue (per-bin)          | Aurealis formula: `hue = fract(log2(freq / 440))`      |
+| Musical pitch       | Hue (whole cloud)      | Aurealis `fract(log2(f / 440))` of the strongest peaks, amplitude-blended, harmonics folded, smoothed ~0.3 s |
 
 ## Architecture
 

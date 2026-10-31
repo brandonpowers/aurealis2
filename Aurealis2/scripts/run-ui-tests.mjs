@@ -168,6 +168,22 @@ test('fft size and time depth controls actually apply', async (page) => {
     if (!(fps > 0)) throw new Error('renderer stopped after control changes');
 });
 
+test('color mode select switches the shader mode and defaults to full', async (page) => {
+    await page.goto(`${BASE}/index.html`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.click('#landing-play-demo');
+    await new Promise(r => setTimeout(r, 1500));
+    const options = await page.$$eval('#color-mode option', els => els.map(e => e.value));
+    if (options[0] !== 'full' || !options.includes('slice')) throw new Error(`color-mode options ${JSON.stringify(options)}`);
+    const initial = await page.evaluate(() => window.__aurealisDebug.getColorMode());
+    if (initial !== 'full') throw new Error(`default color mode ${initial}, want full`);
+    await page.select('#color-mode', 'slice');
+    await new Promise(r => setTimeout(r, 300));
+    const mode = await page.evaluate(() => window.__aurealisDebug.getColorMode());
+    if (mode !== 'slice') throw new Error(`color mode uniform got ${mode}, want slice`);
+    const fps = await page.evaluate(() => window.__aurealisDebug.getFPS());
+    if (!(fps > 0)) throw new Error('renderer stopped after color mode change');
+});
+
 // ---------------------------------------------------------------- runner --
 
 const browser = await puppeteer.launch({

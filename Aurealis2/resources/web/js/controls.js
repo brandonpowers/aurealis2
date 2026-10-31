@@ -34,6 +34,17 @@ export function initControls(onParamChange, initialValues = {}) {
         });
     }
 
+    // Color mode select ('full' = whole cloud one hue, 'slice' = each time slice keeps its hue)
+    const modeSelect = document.getElementById('color-mode');
+    if (modeSelect) {
+        if (initialValues.colorMode !== undefined) {
+            modeSelect.value = initialValues.colorMode;
+        }
+        modeSelect.addEventListener('change', () => {
+            onParamChange('colorMode', modeSelect.value);
+        });
+    }
+
     // Audio source (standalone mode)
     const sourceSelect = document.getElementById('audio-source');
     const fileInput = document.getElementById('audio-file');
@@ -85,6 +96,7 @@ export function setControlValue(paramName, value) {
         zSpacing: 'z-spacing',
         fadeDepth: 'fade-depth',
         fftSize: 'fft-size',
+        colorMode: 'color-mode',
     };
 
     const id = nameToId[paramName];
@@ -97,7 +109,7 @@ export function setControlValue(paramName, value) {
         if (display) {
             if (paramName === 'timeDepth') {
                 display.textContent = Math.round(value).toString();
-            } else if (paramName !== 'fftSize') {
+            } else if (paramName !== 'fftSize' && paramName !== 'colorMode') {
                 display.textContent = parseFloat(value).toFixed(2);
             }
         }

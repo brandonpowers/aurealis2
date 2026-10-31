@@ -8,6 +8,12 @@ import { SpectrogramDataBuffer, createSpectrogramGeometry } from './spectrogram.
 const VERT_SHADER_URL = '../shaders/spectrogram.vert.glsl';
 const FRAG_SHADER_URL = '../shaders/spectrogram.frag.glsl';
 
+// Color modes → uColorMode uniform. Add new modes here and in the vertex shader.
+export const COLOR_MODES = {
+    full:  0,   // whole cloud takes the current dominant hue
+    slice: 1,   // each time slice keeps the hue it had when written
+};
+
 export class Renderer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -25,6 +31,7 @@ export class Renderer {
         // Configurable parameters
         this.params = {
             colorTune: 0.3,
+            colorMode: 'full',
             sensitivity: 3.5,
             stereoSpread: 3.0,
             zSpacing: 0.2,
@@ -86,6 +93,7 @@ export class Renderer {
             uSensitivity:  { value: this.params.sensitivity },
             uHueTexture:   { value: this.dataBuffer.hueTexture },
             uDominantHue:  { value: 0.0 },
+            uColorMode:    { value: COLOR_MODES[this.params.colorMode] ?? 0 },
             uPointSize:    { value: 0.15 },
         };
 
@@ -177,6 +185,13 @@ export class Renderer {
                 this.spectrogramMesh.geometry = createSpectrogramGeometry(this.params.numBins, depth);
                 old.dispose();
             }
+            return;
+        }
+
+        if (name === 'colorMode') {
+            if (!(value in COLOR_MODES)) return;
+            this.params.colorMode = value;
+            if (this.uniforms) this.uniforms.uColorMode.value = COLOR_MODES[value];
             return;
         }
 

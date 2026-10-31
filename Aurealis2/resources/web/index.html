@@ -44,7 +44,7 @@
                         <tr><td>Time</td><td>Depth (recedes into screen)</td></tr>
                         <tr><td>Harmonic energy</td><td>Saturation — tonal is vivid, noise is pastel</td></tr>
                         <tr><td>Transient energy</td><td>Punch — kicks displace and enlarge points</td></tr>
-                        <tr><td>Musical pitch</td><td>Hue — same note, same color, every octave</td></tr>
+                        <tr><td>Musical pitch</td><td>Hue — the strongest notes' color (Full: whole cloud, Slice: each moment keeps its own)</td></tr>
                     </tbody>
                 </table>
                 <div class="help-title">Keyboard</div>
@@ -124,6 +124,13 @@
                 </div>
 
                 <div class="group-title">Color</div>
+                <div class="control-group">
+                    <label for="color-mode">Mode</label>
+                    <select id="color-mode">
+                        <option value="full" selected>Full</option>
+                        <option value="slice">Slice</option>
+                    </select>
+                </div>
                 <div class="control-group">
                     <label for="color-tune">Color Tune</label>
                     <input type="range" id="color-tune" min="0" max="1" step="0.01" value="0.3">

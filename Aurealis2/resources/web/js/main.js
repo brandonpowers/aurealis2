@@ -8,6 +8,7 @@
 import { Renderer } from './renderer.js';
 import { initControls, setControlValue, updateFPS, updateTimeDisplay, updateSourceDisplay, showAudioSourceControls } from './controls.js';
 import { frequencyToNote } from './aurealis.js';
+import { computeSpectrum, dominantHue } from './analysis.js';
 
 // ---- State ----
 let renderer = null;
@@ -111,6 +112,7 @@ window.__aurealisDebug = {
     getFPS: () => renderer?.getFPS() ?? 0,
     getFFTSize: () => renderer?.params.fftSize ?? 0,
     getTimeDepth: () => renderer?.dataBuffer?.timeDepth ?? 0,
+    getColorMode: () => renderer?.params.colorMode,
 };
 
 // ---- Boot ----
@@ -393,6 +395,7 @@ function onParamChange(paramName, value) {
 
     // Send to C++ host if in plugin mode
     if (isPluginMode && typeof window.IPlugSendMsg === 'function') {
+        // colorMode is web-only for now (no C++ param yet) — it is simply not sent.
         const paramIds = {
             colorTune: 0, sensitivity: 1, fftSize: 2, timeDepth: 3,
             stereoSpread: 4, zSpacing: 5, fadeDepth: 6,
@@ -579,31 +582,24 @@ function computeHarmonicEnergy(magnitudes, numBins, output) {
 }
 
 /**
- * Find the dominant frequency bin, compute its aurealis hue, and smooth
- * with circular EMA (shortest-path lerp on the hue circle).
- * Updates the smoothedHue global and pushes it to the renderer uniform.
+ * Whole-cloud colour for this frame: the aurealis hue of the strongest spectral
+ * peaks, amplitude-blended, harmonics folded (analysis.js dominantHue). Smoothed
+ * as a unit vector so hue moves the short way round the circle. On silence the
+ * previous colour is kept. Updates the smoothedHue global.
  */
+const HUE_TIME_CONSTANT = 0.3;  // seconds — frame-rate independent (the feed is rAF-coupled)
+let smoothedHueX = 1.0, smoothedHueY = 0.0, lastHueUpdate = 0;
 function updateDominantHue(magnitudes, numBins, sampleRate, fftSize, colorTune) {
-    // Find peak bin
-    let peakBin = 0;
-    let peakMag = 0;
-    for (let i = 1; i < numBins; i++) {
-        if (magnitudes[i] > peakMag) {
-            peakMag = magnitudes[i];
-            peakBin = i;
-        }
-    }
-
-    if (peakMag < 0.001) return;  // Silence — don't shift color
-
-    const freq = (peakBin + 1) * sampleRate / fftSize;
-    const newHue = ((Math.log2(freq / 440.0) % 1) + 1 + colorTune) % 1;
-
-    // Circular EMA: take shortest path around the hue circle
-    let diff = newHue - smoothedHue;
-    if (diff > 0.5) diff -= 1.0;
-    if (diff < -0.5) diff += 1.0;
-    smoothedHue = ((smoothedHue + diff * 0.15) % 1 + 1) % 1;
+    const { hue, strength } = dominantHue(magnitudes, numBins, sampleRate, fftSize, colorTune);
+    const now = performance.now();
+    const dt = lastHueUpdate ? Math.min(0.25, (now - lastHueUpdate) / 1000) : 1 / 60;
+    lastHueUpdate = now;
+    if (strength <= 0) return;
+    const k = 1 - Math.exp(-dt / HUE_TIME_CONSTANT);
+    const a = hue * 2 * Math.PI;
+    smoothedHueX += (Math.cos(a) - smoothedHueX) * k;
+    smoothedHueY += (Math.sin(a) - smoothedHueY) * k;
+    smoothedHue = ((Math.atan2(smoothedHueY, smoothedHueX) / (2 * Math.PI)) % 1 + 1) % 1;
 }
 
 function pushWebAudioFrame() {
@@ -629,30 +625,11 @@ function pushWebAudioFrame() {
     // Bass transient range: bins covering ~20-400 Hz
     const bassMaxBin = Math.min(Math.ceil(400 * analyserNode.fftSize / audioContext.sampleRate), numBins);
 
+    // Per-bin magnitude (dB-linear over DB_FLOOR..0 dB, scaled by spectral
+    // prominence so ambient beds fade under the notes) and gated stereo width.
+    computeSpectrum(freqDataL, hasStereo ? freqDataR : null, numBins, hasStereo, { magnitudes, stereoWidth });
+
     for (let i = 0; i < numBins; i++) {
-        const dbL = Math.max(-100, freqDataL[i]);
-        const normL = (dbL + 100) / 100;
-        const magL = normL;  // Linear; shader handles perceptual curve
-
-        let magR = magL;
-        if (hasStereo) {
-            const dbR = Math.max(-100, freqDataR[i]);
-            const normR = (dbR + 100) / 100;
-            magR = normR;  // Linear; shader handles perceptual curve
-        }
-
-        // Mid magnitude (average of L and R)
-        magnitudes[i] = (magL + magR) * 0.5;
-
-        // Stereo width: signed balance -1 (full L) to +1 (full R)
-        if (hasStereo) {
-            const sum = magL + magR + 0.0001;
-            const rawWidth = (magR - magL) / sum;
-            stereoWidth[i] = Math.sign(rawWidth) * Math.sqrt(Math.abs(rawWidth));
-        } else {
-            stereoWidth[i] = 0;
-        }
-
         // Spectral flux for transient detection
         if (prevWebAudioMags) {
             const diff = magnitudes[i] - prevWebAudioMags[i];
@@ -666,8 +643,11 @@ function pushWebAudioFrame() {
 
     // Bass flux normalized over bass bins only (kick drums punch through)
     // Full flux normalized over all bins (hi-hats, snares)
-    const bassNorm = Math.min(1, bassFlux / bassMaxBin * 800);
-    const fullNorm = Math.min(1, fullFlux / numBins * 500);
+    // Constants tuned on real music against the gated magnitudes (see
+    // TESTING.md, spectrum probe): kicks saturate, the floor between them
+    // sits near 0.2 in a dense drop and ~0 in a quiet intro.
+    const bassNorm = Math.min(1, bassFlux / bassMaxBin * 160);
+    const fullNorm = Math.min(1, fullFlux / numBins * 100);
     const flux = Math.max(bassNorm, fullNorm);
 
     // Compute harmonic energy (tonal vs noise detection)

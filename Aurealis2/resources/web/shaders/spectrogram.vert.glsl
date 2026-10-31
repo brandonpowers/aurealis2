@@ -17,8 +17,8 @@ uniform float uFadeDepth;       // Alpha fade over time depth
 uniform float uSampleRate;      // For frequency calculation
 uniform float uFFTSize;         // For frequency calculation
 uniform float uPointSize;      // Base point sprite size
-uniform float uColorTune;     // 0-1 hue rotation
-uniform float uDominantHue;  // Smoothed dominant pitch hue for musical color coherence
+uniform float uDominantHue;    // Current dominant hue (0-1), see js/analysis.js dominantHue
+uniform float uColorMode;      // 0 = full (whole cloud), 1 = slice (per time slice) — renderer.js COLOR_MODES
 
 attribute float aBinIndex;
 attribute float aTimeIndex;
@@ -30,16 +30,16 @@ varying float vTransientEnergy;
 varying float vFrequency;
 varying float vNormFreq;        // 0-1 normalized frequency position
 varying float vAge;             // 0 = newest, 1 = oldest
-varying float vHue;             // Per-slice dominant hue (baked at write time)
+varying float vHue;             // Whole-cloud dominant hue
 varying float vDensityWeight;   // Log-frequency density compensation
 varying float vPointSize;
 
 void main() {
+    // Row of this time slice in the circular buffer (0 = oldest written)
+    float sliceRow = mod(uWriteIndex - aTimeIndex - 1.0 + uTimeDepth, uTimeDepth);
+
     // UV coordinates into the DataTexture (circular buffer unwinding)
-    vec2 uv = vec2(
-        (aBinIndex + 0.5) / uNumBins,
-        (mod(uWriteIndex - aTimeIndex - 1.0 + uTimeDepth, uTimeDepth) + 0.5) / uTimeDepth
-    );
+    vec2 uv = vec2((aBinIndex + 0.5) / uNumBins, (sliceRow + 0.5) / uTimeDepth);
 
     // Sample the RGBA data texture
     vec4 data = texture2D(uDataTexture, uv);
@@ -51,12 +51,12 @@ void main() {
     // Frequency for this bin (Hz)
     float frequency = (aBinIndex + 1.0) * uSampleRate / uFFTSize;
 
-    // Per-bin aurealis hue blended toward dominant pitch
-    float perBinHue = fract(log2(max(frequency, 20.0) / 440.0) + uColorTune);
-    // Circular shortest-path blend (avoids ugly mid-hue interpolation)
-    float hueDiff = uDominantHue - perBinHue;
-    hueDiff = hueDiff - floor(hueDiff + 0.5);  // Wrap to [-0.5, 0.5]
-    float hue = fract(perBinHue + hueDiff * harmonic * 0.7);
+    // Hue: the aurealis hue of the strongest spectral peaks, amplitude-blended,
+    // harmonics folded (js/analysis.js dominantHue), smoothed in main.js.
+    //   Full  (uColorMode 0): the whole cloud takes the current hue.
+    //   Slice (uColorMode 1): each time slice keeps the hue baked when it was written.
+    float sliceHue = texture2D(uHueTexture, vec2((sliceRow + 0.5) / uTimeDepth, 0.5)).r;
+    float hue = uColorMode < 0.5 ? uDominantHue : sliceHue;
 
     // Y position: log-scale frequency, mapped to 0..8 world units
     float logMin = log(20.0);       // 20 Hz audible floor

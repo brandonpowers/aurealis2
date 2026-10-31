@@ -79,6 +79,9 @@ jobs:
       - name: Install node dependencies
         run: npm ci
 
+      - name: Run web analysis unit tests
+        run: npm test
+
       - name: Generate reference audio
         run: bash Aurealis2/scripts/gen-test-audio.sh
 

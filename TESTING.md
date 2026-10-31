@@ -2,16 +2,20 @@
 
 ## Overview
 
-Aurealis2 has three categories of automated tests, plus one manual performance tool:
+Aurealis2 has four categories of automated tests, plus two manual tools:
 
 1. **C++ DSP unit tests** — validate the audio analysis pipeline (FFT, stereo, chords, etc.)
-2. **Visual reference tests** — validate the WebGL rendering via automated screenshots
-3. **UI state tests** — validate the app chrome: landing, panel, shortcuts, help overlay, metadata
-4. **FPS measurement** — manual, real-GPU perf spot-check (not part of the gating suite)
+2. **Web analysis unit tests** — validate the pure helpers behind the Web Audio path (`js/analysis.js`)
+3. **Visual reference tests** — validate the WebGL rendering via automated screenshots
+4. **UI state tests** — validate the app chrome: landing, panel, shortcuts, help overlay, metadata
+5. **Spectrum probe** — manual, prints magnitude / stereo-width / alpha statistics for a real audio file
+6. **FPS measurement** — manual, real-GPU perf spot-check (not part of the gating suite)
 
-Re-run (1) after DSP changes, (2) after shader/rendering changes, and (3) after any
-change to `index.html`, `main.js`, `controls.js`, or `css/styles.css`. (4) is run
-by hand on a normal desktop session when investigating performance, not on every change.
+Re-run (1) after DSP changes, (2) after any change to `js/analysis.js` or the dB→magnitude
+mapping, (3) after shader/rendering changes, and (4) after any change to `index.html`,
+`main.js`, `controls.js`, or `css/styles.css`. (5) is the way to reason about brightness
+and stereo width numerically — run it on real music, not only the synthesized demo. (6) is
+run by hand on a normal desktop session when investigating performance, not on every change.
 
 ---
 
@@ -56,6 +60,68 @@ g++ -std=c++17 -I Aurealis2/dsp tests/test_fft.cpp -o test_fft && ./test_fft
 - After any change to files in `Aurealis2/dsp/`
 - After changing FFT size, sample rate, or frequency constants
 - After modifying the analysis pipeline or ring buffer
+
+---
+
+## Web Analysis Unit Tests
+
+Located in `tests/web/`, run with Node's built-in test runner (no extra dependency).
+They cover `Aurealis2/resources/web/js/analysis.js`, the pure functions that turn
+`getFloatFrequencyData` dB values into what the shader sees:
+
+| Function | What the tests pin down |
+|----------|-------------------------|
+| `dbToMagnitude` | `DB_FLOOR` (-70 dB) and below → 0, including `-Infinity`; 0 dB → 1; linear in dB between |
+| `midMagnitudeFromDb` | L/R are averaged as linear amplitude first, so a hard-panned note is 6 dB down, not half as bright |
+| `stereoBalance` | computed on linear amplitude (a 6 dB pan reads ≈ 0.58), hard-pan → ±1, silence → 0 |
+| `stereoWidthForBin` | balance is gated by mid magnitude so noise-floor bins stay centred |
+| `spectralProminence` | dB above the local mean over ≈ ±¼ octave; flat spectra → 0, a lone peak → its height |
+| `prominenceGate` | `GATE_FLOOR` (0.15) at `PROMINENCE_LO` (1 dB), 1 at `PROMINENCE_HI` (9 dB), smoothstep between |
+| `computeSpectrum` | the per-frame entry point main.js calls: a note keeps full magnitude, the bed under it fades to `GATE_FLOOR`, width follows the gated magnitude |
+| `findSpectralPeaks` | up to 3 strongest peaks by linear amplitude, parabolic-interpolated; harmonics (and sub-harmonics) of a stronger peak fold into it; peaks > 20 dB under the strongest ignored |
+| `blendHues` | weighted circular mean (short way round the circle); `strength` 0 when empty |
+| `dominantHue` | one note → that note's aurealis hue even with harmonics present; a chord → between its notes, nearest the strongest; `colorTune` rotates; silence → strength 0 |
+
+```bash
+npm test
+# equivalent: node --test tests/web/*.test.mjs
+```
+
+The C++ `StereoAnalyzer` uses the same floor (`StereoAnalyzer::DB_FLOOR`), the same
+|X| / N normalisation and the same width gate, but **not yet the prominence gate** — the
+plugin path is deferred and will need `spectralProminence` ported when it is revived. If
+you change one side, change the other and update the table above.
+
+---
+
+## Spectrum Probe (manual, any real audio file)
+
+`Aurealis2/scripts/probe-spectrum.mjs` simulates the Web Audio analyser (Blackman window,
+|X| / N, smoothing 0.3 at 60 fps), runs the real `analysis.js` helpers, then applies a copy
+of the fragment-shader alpha chain per bin. For each time it prints how many of the 2048
+bins would be drawn, the brightness ratio between the loudest bin and the median bin, the
+average |stereo width| of noise-floor bins, and the transient flux — alongside the
+pre-October-2026 legacy mapping for comparison.
+
+```bash
+node Aurealis2/scripts/probe-spectrum.mjs path/to/track.mp3            # every 20 s
+node Aurealis2/scripts/probe-spectrum.mjs path/to/track.mp3 5 60 120    # specific seconds
+```
+
+Use it on real recordings or a mic capture. The synthesized `demo.m4a` and
+`test-reference.wav` have a digital-silence floor (≈ -120 dB) and never exhibit the
+"signal on every frequency" problem the floor mapping exists to prevent. The shader math
+inside the script is a hand-maintained copy of `spectrogram.frag.glsl`; update both.
+
+For pictures of the same track, `Aurealis2/scripts/capture-track.mjs` uploads the file
+through the landing page in headless Chrome and screenshots it at the given seconds. Pass
+two ports to compare builds side by side (serve a `git worktree` of the previous commit on
+the second port; copy the gitignored audio file into that worktree first):
+
+```bash
+node Aurealis2/scripts/capture-track.mjs path/to/track.mp3 --ports 8080,8081 --times 8,45,105 --out /tmp
+# → /tmp/track-<port>-<t>s.png
+```
 
 ---
 
@@ -190,7 +256,7 @@ npm run test:ui
 # equivalent: node Aurealis2/scripts/run-ui-tests.mjs [--port 8080] [--out /tmp]
 ```
 
-### The 12 Tests
+### The 13 Tests
 
 | # | Test | What it validates |
 |---|------|--------------------|
@@ -206,6 +272,7 @@ npm run test:ui
 | 10 | help overlay toggles with ? and closes with Escape | `?` opens the help overlay (7-row dimension legend); `Escape` closes it |
 | 11 | page metadata: title, description, favicon | Title starts with "Aurealis", meta description is present, favicon link resolves and loads |
 | 12 | fft size and time depth controls actually apply | Changing the FFT-size select and the time-depth slider actually rebuilds the analyser/renderer state (not just the displayed value), and the renderer keeps running afterward |
+| 13 | color mode select switches the shader mode and defaults to full | The Color → Mode select lists `full` first and `slice`; the renderer starts in `full`; selecting `slice` updates the `uColorMode` uniform and the renderer keeps running |
 
 ### How to Add a Test
 
@@ -286,11 +353,36 @@ reports — there isn't one yet.
 
 ---
 
+## Dev Server (no cache, live reload)
+
+`npm run serve` now runs `Aurealis2/scripts/dev-server.mjs` (no dependencies). It serves the
+web directory with `Cache-Control: no-store` on every response — a plain static server lets
+Chrome reuse `main.js` and the `.glsl` shaders for days without asking — and reloads every
+open tab when any file under `Aurealis2/resources/web` changes. The reload hook is injected
+into `index.html` by the server only; nothing on disk changes, so the same tree still works
+inside the iPlug2 WebView. `npm run serve:static` keeps the old python server (what CI uses).
+
+```bash
+npm run serve                      # http://localhost:8080, no-store + live reload
+node Aurealis2/scripts/dev-server.mjs --port 8082 --no-reload
+```
+
+If you must use another static server, open DevTools → Network → "Disable cache" (only
+active while DevTools is open) or hard-refresh with Ctrl+Shift+R after every JS/GLSL edit.
+
+---
+
 ## Quick Reference
 
 ```bash
 # Configure + build + run all DSP tests
 cmake --preset default && cmake --build build && ctest --test-dir build --output-on-failure
+
+# Run web analysis unit tests
+npm test
+
+# Probe magnitude / stereo width / alpha statistics on a real track
+node Aurealis2/scripts/probe-spectrum.mjs path/to/track.mp3
 
 # Run visual reference test (manual)
 # browser → http://localhost:8080/index.html?ref
@@ -298,7 +390,7 @@ cmake --preset default && cmake --build build && ctest --test-dir build --output
 # Run visual reference test (automated, 7 checkpoints)
 npm run test:visual
 
-# Run UI state tests (automated, 12 tests)
+# Run UI state tests (automated, 13 tests)
 npm run test:ui
 
 # Regenerate reference WAV
